@@ -68,7 +68,8 @@ const options: SearchOptions = {
 };
 
 async function main() {
-  const pagesInfo = options.pages && options.pages > 1 ? ` (${options.pages} pages each)` : "";
+  const pagesInfo =
+    options.pages && options.pages > 1 ? ` (${options.pages} pages each)` : "";
   console.log(`Scraping rooms for rent in Warsaw${pagesInfo}...\n`);
 
   const rooms: Room[] = [];
@@ -98,6 +99,9 @@ async function main() {
 
     if (values.json) {
       console.log(JSON.stringify(rooms, null, 2));
+      let date = new Date();
+      let filename = `${date.getUTCDate()}-${date.getUTCMonth() + 1}-${date.getUTCFullYear()}.json`;
+      Bun.write(filename, JSON.stringify(rooms, null, 2));
     } else {
       displayResults(rooms);
     }
@@ -118,7 +122,9 @@ function displayResults(rooms: Room[]) {
   console.log(`${"=".repeat(80)}\n`);
 
   for (const room of rooms) {
-    const price = room.price ? `${room.price} ${room.currency}` : "Price not specified";
+    const price = room.price
+      ? `${room.price} ${room.currency}`
+      : "Price not specified";
     const area = room.area ? ` | ${room.area}m²` : "";
 
     console.log(`[${room.source.toUpperCase()}] ${room.title}`);
