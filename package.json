@@ -1,0 +1,23 @@
+{
+  "name": "room-scraper",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.0.9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "puppeteer": "^24.35.0"
+  },
+  "scripts": {
+    "scrape": "bun run src/index.ts",
+    "test": "npx playwright test --ui"
+  },
+  "bin": {
+    "room-scraper": "./src/index.ts"
+  }
+}
