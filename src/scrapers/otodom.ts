@@ -11,7 +11,7 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
   const page = await browser.newPage();
 
   await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
   );
 
   const allRooms: Room[] = [];
@@ -20,7 +20,8 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
   try {
     for (let pageNum = 1; pageNum <= pagesToScrape; pageNum++) {
       // Build URL for rooms for rent in Warsaw
-      let url = "https://www.otodom.pl/pl/wyniki/wynajem/pokoj/mazowieckie/warszawa/warszawa/warszawa";
+      let url =
+        "https://www.otodom.pl/pl/wyniki/wynajem/pokoj/mazowieckie/warszawa/warszawa/warszawa";
 
       const params: string[] = [];
       if (options.maxPrice) {
@@ -56,7 +57,7 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
       const listingSelectors = [
         '[data-cy="search.listing"]',
         '[data-cy="search.listing.organic"]',
-        'article',
+        "article",
         '[class*="listing"]',
       ];
 
@@ -101,13 +102,18 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
         }
 
         cards.forEach((card) => {
-          const container = card.closest("li") || card.closest("article") || card;
-          const linkEl = container.querySelector('a[href*="/pl/oferta/"]') || container.querySelector("a");
+          const container =
+            card.closest("li") || card.closest("article") || card;
+          const linkEl =
+            container.querySelector('a[href*="/pl/oferta/"]') ||
+            container.querySelector("a");
           const titleEl =
             container.querySelector('[data-cy="listing-item-title"]') ||
             container.querySelector("h3") ||
             container.querySelector("p[data-cy]");
-          const areaEl = container.querySelector('span[aria-label*="Powierzchnia"]');
+          const areaEl = container.querySelector(
+            'span[aria-label*="Powierzchnia"]',
+          );
           const imgEl = container.querySelector("img");
 
           if (!linkEl) return;
@@ -118,13 +124,21 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
           // Extract price from container text
           const allContainerText = container.textContent || "";
           const priceMatch = allContainerText.match(/(\d[\d\s]*)\s*zł/i);
-          const price = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ""), 10) : null;
+          let price = null;
+          if (priceMatch && priceMatch[1]) {
+            price = parseInt(priceMatch[1].replace(/\s/g, ""), 10);
+          }
 
           const areaText = areaEl?.textContent || "";
           const areaMatch = areaText.match(/(\d+)/);
-          const area = areaMatch ? parseInt(areaMatch[1], 10) : undefined;
+          let area = undefined;
+          if (areaMatch && areaMatch[1]) {
+            area = parseInt(areaMatch[1], 10);
+          }
 
-          const fullUrl = href.startsWith("http") ? href : `https://www.otodom.pl${href}`;
+          const fullUrl = href.startsWith("http")
+            ? href
+            : `https://www.otodom.pl${href}`;
 
           if (listings.some((l) => l.url === fullUrl)) return;
 
@@ -141,7 +155,12 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
           ];
           for (const pattern of locationPatterns) {
             const match = allContainerText.match(pattern);
-            if (match && match[1] && !match[1].includes("zł") && !match[1].includes("Cena")) {
+            if (
+              match &&
+              match[1] &&
+              !match[1].includes("zł") &&
+              !match[1].includes("Cena")
+            ) {
               location = `Warszawa, ${match[1]}`;
               break;
             }
@@ -175,9 +194,10 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
 
       // Check if there's a next page
       const hasNextPage = await page.evaluate(() => {
-        const nextBtn = document.querySelector('[data-cy="pagination.next-page"]') ||
-                        document.querySelector('a[aria-label*="next"]') ||
-                        document.querySelector('button[aria-label*="Następna"]');
+        const nextBtn =
+          document.querySelector('[data-cy="pagination.next-page"]') ||
+          document.querySelector('a[aria-label*="next"]') ||
+          document.querySelector('button[aria-label*="Następna"]');
         return nextBtn !== null && !nextBtn.hasAttribute("disabled");
       });
 
@@ -194,13 +214,13 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
     if (options.roomType) {
       const keywords = getRoomTypeKeywords(options.roomType);
       filteredRooms = allRooms.filter((room) =>
-        keywords.some((kw) => room.title.toLowerCase().includes(kw))
+        keywords.some((kw) => room.title.toLowerCase().includes(kw)),
       );
     }
 
     if (options.maxPrice) {
       filteredRooms = filteredRooms.filter(
-        (room) => room.price === null || room.price <= options.maxPrice!
+        (room) => room.price === null || room.price <= options.maxPrice!,
       );
     }
 
@@ -215,7 +235,13 @@ function getRoomTypeKeywords(roomType: string): string[] {
     case "single":
       return ["jednoosobowy", "1-osobowy", "single", "dla jednej"];
     case "shared":
-      return ["współlokator", "współdziel", "shared", "2-osobowy", "dwuosobowy"];
+      return [
+        "współlokator",
+        "współdziel",
+        "shared",
+        "2-osobowy",
+        "dwuosobowy",
+      ];
     case "studio":
       return ["kawalerka", "studio", "garsoniera"];
     case "apartment":

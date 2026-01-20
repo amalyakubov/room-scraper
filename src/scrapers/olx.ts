@@ -11,7 +11,7 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
   const page = await browser.newPage();
 
   await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
   );
 
   const allRooms: Room[] = [];
@@ -41,9 +41,13 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
 
       // Wait for listings to load - try multiple selectors
       try {
-        await page.waitForSelector('[data-testid="listing-grid"]', { timeout: 10000 });
+        await page.waitForSelector('[data-testid="listing-grid"]', {
+          timeout: 10000,
+        });
       } catch {
-        await page.waitForSelector('[data-cy="l-card"]', { timeout: 10000 }).catch(() => {});
+        await page
+          .waitForSelector('[data-cy="l-card"]', { timeout: 10000 })
+          .catch(() => {});
       }
 
       // Accept cookies on first page
@@ -88,23 +92,40 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
         }
 
         cards.forEach((card) => {
-          const container = card.closest('[data-cy="l-card"]') || card.closest('[data-testid="adCard"]') || card;
-          const linkEl = container.querySelector("a") || (card.tagName === "A" ? card : null);
-          const titleEl = container.querySelector("h4, h6, [data-cy='ad-title']");
-          const priceEl = container.querySelector('[data-testid="ad-price"], [data-cy="ad-price"]');
-          const locationEl = container.querySelector('[data-testid="location-date"], [data-cy="location-date"]');
+          const container =
+            card.closest('[data-cy="l-card"]') ||
+            card.closest('[data-testid="adCard"]') ||
+            card;
+          const linkEl =
+            container.querySelector("a") ||
+            (card.tagName === "A" ? card : null);
+          const titleEl = container.querySelector(
+            "h4, h6, [data-cy='ad-title']",
+          );
+          const priceEl = container.querySelector(
+            '[data-testid="ad-price"], [data-cy="ad-price"]',
+          );
+          const locationEl = container.querySelector(
+            '[data-testid="location-date"], [data-cy="location-date"]',
+          );
           const imgEl = container.querySelector("img");
 
           if (!linkEl) return;
 
           const priceText = priceEl?.textContent || "";
           const priceMatch = priceText.replace(/\s/g, "").match(/(\d+)/);
-          const price = priceMatch ? parseInt(priceMatch[1], 10) : null;
+
+          let price = null;
+          if (priceMatch && priceMatch[1]) {
+            price = parseInt(priceMatch[1], 10);
+          }
 
           const href = (linkEl as HTMLAnchorElement).getAttribute("href") || "";
           if (!href.includes("/d/") && !href.includes("/oferta/")) return;
 
-          const fullUrl = href.startsWith("http") ? href : `https://www.olx.pl${href}`;
+          const fullUrl = href.startsWith("http")
+            ? href
+            : `https://www.olx.pl${href}`;
 
           if (listings.some((l) => l.url === fullUrl)) return;
 
@@ -112,7 +133,8 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
             title: titleEl?.textContent?.trim() || "Room listing",
             price,
             currency: "PLN",
-            location: locationEl?.textContent?.split(" - ")[0]?.trim() || "Warszawa",
+            location:
+              locationEl?.textContent?.split(" - ")[0]?.trim() || "Warszawa",
             url: fullUrl,
             source: "olx" as const,
             imageUrl: imgEl?.getAttribute("src") || undefined,
@@ -135,7 +157,9 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
 
       // Check if there's a next page
       const hasNextPage = await page.evaluate(() => {
-        const nextBtn = document.querySelector('[data-testid="pagination-forward"]');
+        const nextBtn = document.querySelector(
+          '[data-testid="pagination-forward"]',
+        );
         return nextBtn !== null && !nextBtn.hasAttribute("disabled");
       });
 
@@ -152,13 +176,13 @@ export async function scrapeOlx(options: SearchOptions): Promise<Room[]> {
     if (options.roomType) {
       const keywords = getRoomTypeKeywords(options.roomType);
       filteredRooms = allRooms.filter((room) =>
-        keywords.some((kw) => room.title.toLowerCase().includes(kw))
+        keywords.some((kw) => room.title.toLowerCase().includes(kw)),
       );
     }
 
     if (options.maxPrice) {
       filteredRooms = filteredRooms.filter(
-        (room) => room.price === null || room.price <= options.maxPrice!
+        (room) => room.price === null || room.price <= options.maxPrice!,
       );
     }
 
@@ -173,7 +197,13 @@ function getRoomTypeKeywords(roomType: string): string[] {
     case "single":
       return ["jednoosobowy", "1-osobowy", "single", "dla jednej"];
     case "shared":
-      return ["współlokator", "współdziel", "shared", "2-osobowy", "dwuosobowy"];
+      return [
+        "współlokator",
+        "współdziel",
+        "shared",
+        "2-osobowy",
+        "dwuosobowy",
+      ];
     case "studio":
       return ["kawalerka", "studio", "garsoniera"];
     case "apartment":
