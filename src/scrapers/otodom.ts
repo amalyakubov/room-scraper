@@ -10,9 +10,10 @@ export async function scrapeOtodom(options: SearchOptions): Promise<Room[]> {
   });
   const page = await browser.newPage();
 
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-  );
+  await page.setUserAgent({
+    platform:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+  });
 
   const allRooms: Room[] = [];
   const pagesToScrape = Math.min(options.pages || 5, MAX_PAGES);
